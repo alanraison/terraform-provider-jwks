@@ -3,7 +3,7 @@
 page_title: "jwks_from_key Data Source - terraform-provider-jwks"
 subcategory: ""
 description: |-
-  Calculates a JSON Web Key Set from a given public or private key.
+  Calculates a JSON Web Key from a given public or private key.
 ---
 
 # jwks_from_key (Data Source)

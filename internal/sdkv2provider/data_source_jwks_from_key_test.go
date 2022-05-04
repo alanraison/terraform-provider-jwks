@@ -1,71 +1,11 @@
 package sdkv2provider
 
 import (
-	"encoding/base64"
-	"encoding/pem"
 	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
-)
-
-const (
-	PrivateKey = `
------BEGIN RSA PRIVATE KEY-----
-MIIEowIBAAKCAQEAgUElV5mwqkloIrM8ZNZ72gSCcnSJt7+/Usa5G+D15YQUAdf9
-c1zEekTfHgDP+04nw/uFNFaE5v1RbHaPxhZYVg5ZErNCa/hzn+x10xzcepeS3KPV
-Xcxae4MR0BEegvqZqJzN9loXsNL/c3H/B+2Gle3hTxjlWFb3F5qLgR+4Mf4ruhER
-1v6eHQa/nchi03MBpT4UeJ7MrL92hTJYLdpSyCqmr8yjxkKJDVC2uRrr+sTSxfh7
-r6v24u/vp/QTmBIAlNPgadVAZw17iNNb7vjV7Gwl/5gHXonCUKURaV++dBNLrHIZ
-pqcAM8wHRph8mD1EfL9hsz77pHewxolBATV+7QIDAQABAoIBAC1rK+kFW3vrAYm3
-+8/fQnQQw5nec4o6+crng6JVQXLeH32qXShNf8kLLG/Jj0vaYcTPPDZw9JCKkTMQ
-0mKj9XR/5DLbBMsV6eNXXuvJJ3x4iKW5eD9WkLD4FKlNarBRyO7j8sfPTqXW7uat
-NxWdFH7YsSRvNh/9pyQHLWA5OituidMrYbc3EUx8B1GPNyJ9W8Q8znNYLfwYOjU4
-Wv1SLE6qGQQH9Q0WzA2WUf8jklCYyMYTIywAjGb8kbAJlKhmj2t2Igjmqtwt1PYc
-pGlqbtQBDUiWXt5S4YX/1maIQ/49yeNUajjpbJiH3DbhJbHwFTzP3pZ9P9GHOzlG
-kYR+wSECgYEAw/Xida8kSv8n86V3qSY/I+fYQ5V+jDtXIE+JhRnS8xzbOzz3v0WS
-Oo5H+o4nJx5eL3Ghb3Gcm0Jn46dHrxinHbm+3RjXv/X6tlbxIYjRSQfHOTSMCTvd
-qcliF5vC6RCLXuc7R+IWR1Ky6eDEZGtrvt3DyeYABsp9fRUFR/6NluUCgYEAqNsw
-1aSl7WJa27F0DoJdlU9LWerpXcazlJcIdOz/S9QDmSK3RDQTdqfTxRmrxiYI9LEs
-mkOkvzlnnOBMpnZ3ZOU5qIRfprecRIi37KDAOHWGnlC0EWGgl46YLb7/jXiWf0AG
-Y+DfJJNd9i6TbIDWu8254/erAS6bKMhW/3q7f2kCgYAZ7Id/BiKJAWRpqTRBXlvw
-BhXoKvjI2HjYP21z/EyZ+PFPzur/lNaZhIUlMnUfibbwE9pFggQzzf8scM7c7Sf+
-mLoVSdoQ/Rujz7CqvQzi2nKSsM7t0curUIb3lJWee5/UeEaxZcmIufoNUrzohAWH
-BJOIPDM4ssUTLRq7wYM9uQKBgHCBau5OP8gE6mjKuXsZXWUoahpFLKwwwmJUp2vQ
-pOFPJ/6WZOlqkTVT6QPAcPUbTohKrF80hsZqZyDdSfT3peFx4ZLocBrS56m6NmHR
-UYHMvJ8rQm76T1fryHVidz85g3zRmfBeWg8yqT5oFg4LYgfLsPm1gRjOhs8LfPvI
-OLlRAoGBAIZ5Uv4Z3s8O7WKXXUe/lq6j7vfiVkR1NW/Z/WLKXZpnmvJ7FgxN4e56
-RXT7GwNQHIY8eDjDnsHxzrxd+raOxOZeKcMHj3XyjCX3NHfTscnsBPAGYpY/Wxzh
-T8UYnFu6RzkixElTf2rseEav7rkdKkI3LAeIZy7B0HulKKsmqVQ7
------END RSA PRIVATE KEY-----
-`
-
-	PublicKey = `
------BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAgUElV5mwqkloIrM8ZNZ7
-2gSCcnSJt7+/Usa5G+D15YQUAdf9c1zEekTfHgDP+04nw/uFNFaE5v1RbHaPxhZY
-Vg5ZErNCa/hzn+x10xzcepeS3KPVXcxae4MR0BEegvqZqJzN9loXsNL/c3H/B+2G
-le3hTxjlWFb3F5qLgR+4Mf4ruhER1v6eHQa/nchi03MBpT4UeJ7MrL92hTJYLdpS
-yCqmr8yjxkKJDVC2uRrr+sTSxfh7r6v24u/vp/QTmBIAlNPgadVAZw17iNNb7vjV
-7Gwl/5gHXonCUKURaV++dBNLrHIZpqcAM8wHRph8mD1EfL9hsz77pHewxolBATV+
-7QIDAQAB
------END PUBLIC KEY-----
-`
-	ECPrivateKey = `
------BEGIN EC PRIVATE KEY-----
-MIGkAgEBBDBYv+Kxcvmf1THbJ3amFFEwf9o8JnBV+CFQSERT0XQvQQqiLswPShGK
-uWypa5iw3B2gBwYFK4EEACKhZANiAARCdKoVsoZ0SLP+DQKhkVcEC+wwxswGqqdn
-eMn/OsvG4FKENOauxGhTswI4Atu3Th8WhEjwfTppLVarVewBsyIwtSqmXmOg5Z5Q
-KHHI9vS/7sHzogT3b31QcGlsB9ye2F0=
------END EC PRIVATE KEY-----`
-
-	ECPublicKey = `
------BEGIN PUBLIC KEY-----
-MHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEQnSqFbKGdEiz/g0CoZFXBAvsMMbMBqqn
-Z3jJ/zrLxuBShDTmrsRoU7MCOALbt04fFoRI8H06aS1Wq1XsAbMiMLUqpl5joOWe
-UChxyPb0v+7B86IE9299UHBpbAfcnthd
------END PUBLIC KEY-----`
 )
 
 func TestAccJwksFromKeyDataSource(t *testing.T) {
@@ -164,24 +104,4 @@ EOF
 		kid = %s
 	}
 	`, data, kid)
-}
-
-func privateKeyDer() string {
-	block, _ := pem.Decode([]byte(PrivateKey))
-	return base64.StdEncoding.EncodeToString(block.Bytes)
-}
-
-func publicKeyDer() string {
-	block, _ := pem.Decode([]byte(PublicKey))
-	return base64.StdEncoding.EncodeToString(block.Bytes)
-}
-
-func ecPrivateKeyDer() string {
-	block, _ := pem.Decode([]byte(ECPrivateKey))
-	return base64.StdEncoding.EncodeToString(block.Bytes)
-}
-
-func ecPublicKeyDer() string {
-	block, _ := pem.Decode([]byte(ECPublicKey))
-	return base64.StdEncoding.EncodeToString(block.Bytes)
 }
